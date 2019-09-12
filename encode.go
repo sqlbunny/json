@@ -691,8 +691,9 @@ type structEncoder struct {
 }
 
 type structFields struct {
-	list      []field
-	nameIndex map[string]int
+	list        []field
+	hasRequired bool
+	nameIndex   map[string]int
 }
 
 func (se structEncoder) encode(e *encodeState, v reflect.Value, opts encOpts) {
@@ -1110,6 +1111,7 @@ type field struct {
 	index     []int
 	typ       reflect.Type
 	omitEmpty bool
+	required  bool
 	quoted    bool
 
 	encoder encoderFunc
@@ -1226,6 +1228,7 @@ func typeFields(t reflect.Type) structFields {
 						index:     index,
 						typ:       ft,
 						omitEmpty: opts.Contains("omitempty"),
+						required:  opts.Contains("required"),
 						quoted:    quoted,
 					}
 					field.nameBytes = []byte(field.name)
@@ -1315,7 +1318,19 @@ func typeFields(t reflect.Type) structFields {
 	for i, field := range fields {
 		nameIndex[field.name] = i
 	}
-	return structFields{fields, nameIndex}
+
+	hasRequired := false
+	for _, f := range fields {
+		if f.required {
+			hasRequired = true
+		}
+	}
+
+	return structFields{
+		list:        fields,
+		hasRequired: hasRequired,
+		nameIndex:   nameIndex,
+	}
 }
 
 // dominantField looks through the fields, all of which are known to

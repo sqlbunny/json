@@ -267,6 +267,11 @@ type XYZ struct {
 	Z interface{}
 }
 
+type Reqd struct {
+	X int `json:"x,required"`
+	Y int `json:"y,required"`
+}
+
 type unexportedWithMethods struct{}
 
 func (unexportedWithMethods) F() {}
@@ -976,6 +981,14 @@ var unmarshalTests = []unmarshalTest{
 	{in: `{"X": 1, "x": 3, "Y": 2}`, ptr: new(S9), out: S9{1, 2}, caseSensitiveFields: true, disallowDuplicateFields: true},
 	{in: `{"X": 1, "x": 3, "Y": 2}`, ptr: new(S9), err: errors.New(`json: duplicate field "X"`), disallowDuplicateFields: true},
 	{in: `{"X": 1, "x": 3, "Y": 2}`, ptr: new(S9), err: errors.New(`json: unknown field "x"`), caseSensitiveFields: true, disallowUnknownFields: true},
+
+	// additional tests for required fields
+	{in: `{"x": 1, "y": 2}`, ptr: new(Reqd), out: Reqd{1, 2}},
+	{in: `{"z": 1, "y": 2}`, ptr: new(Reqd), err: errors.New(`json: missing required field "x"`)},
+	{in: `{}`, ptr: new(Reqd), err: errors.New(`json: missing required field "x"`)},
+	{in: `{"x": 3}`, ptr: new(Reqd), err: errors.New(`json: missing required field "y"`)},
+	{in: `{"x": 1, "y": null}`, ptr: new(Reqd), out: Reqd{1, 0}},
+	{in: `{"X": 1, "y": 2}`, ptr: new(Reqd), err: errors.New(`json: missing required field "x"`), caseSensitiveFields: true},
 }
 
 func TestMarshal(t *testing.T) {

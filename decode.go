@@ -653,7 +653,7 @@ func (d *decodeState) object(v reflect.Value) error {
 		}
 	case reflect.Struct:
 		fields = cachedTypeFields(t)
-		if d.disallowDuplicateFields {
+		if d.disallowDuplicateFields || fields.hasRequired {
 			seenFields = make([]bool, len(fields.list))
 		}
 		// ok
@@ -718,7 +718,7 @@ func (d *decodeState) object(v reflect.Value) error {
 				}
 			}
 			if f != nil {
-				if d.disallowDuplicateFields {
+				if seenFields != nil {
 					if seenFields[fi] {
 						d.saveError(fmt.Errorf("json: duplicate field \"%s\"", f.name))
 						return nil
@@ -842,6 +842,16 @@ func (d *decodeState) object(v reflect.Value) error {
 			panic(phasePanicMsg)
 		}
 	}
+
+	if v.Kind() == reflect.Struct && fields.hasRequired {
+		for i, f := range fields.list {
+			if f.required && !seenFields[i] {
+				d.saveError(fmt.Errorf("json: missing required field \"%s\"", f.name))
+				return nil
+			}
+		}
+	}
+
 	return nil
 }
 
