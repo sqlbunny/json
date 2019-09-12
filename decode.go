@@ -214,6 +214,7 @@ type decodeState struct {
 	useNumber               bool
 	disallowUnknownFields   bool
 	disallowDuplicateFields bool
+	disallowNullPrimitives  bool
 }
 
 // readIndex returns the position of the last byte read.
@@ -914,6 +915,11 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 		switch v.Kind() {
 		case reflect.Interface, reflect.Ptr, reflect.Map, reflect.Slice:
 			v.Set(reflect.Zero(v.Type()))
+		default:
+			if d.disallowNullPrimitives {
+				d.saveError(&UnmarshalTypeError{Value: "null", Type: v.Type(), Offset: int64(d.off)})
+				break
+			}
 			// otherwise, ignore null for primitives/string
 		}
 	case 't', 'f': // true, false

@@ -45,6 +45,10 @@ func (dec *Decoder) DisallowUnknownFields() { dec.d.disallowUnknownFields = true
 // is a struct, and the input contains the same field multiple times.
 func (dec *Decoder) DisallowDuplicateFields() { dec.d.disallowDuplicateFields = true }
 
+// DisallowNullPrimitives causes the Decoder to return an error when the destination
+// is a primitive type (string, int..) and the JSON value is null.
+func (dec *Decoder) DisallowNullPrimitives() { dec.d.disallowNullPrimitives = true }
+
 // Decode reads the next JSON-encoded value from its
 // input and stores it in the value pointed to by v.
 //

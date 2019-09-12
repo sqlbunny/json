@@ -396,6 +396,7 @@ type unmarshalTest struct {
 	golden                  bool
 	disallowUnknownFields   bool
 	disallowDuplicateFields bool
+	disallowNullPrimitives  bool
 }
 
 type B struct {
@@ -954,6 +955,15 @@ var unmarshalTests = []unmarshalTest{
 	// additional tests for disallowDuplicateFields
 	{in: `{"x": 1, "x": 3}`, ptr: new(S9), err: errors.New(`json: duplicate field "X"`), disallowDuplicateFields: true},
 	{in: `{"X": 1, "x": 3}`, ptr: new(S9), err: errors.New(`json: duplicate field "X"`), disallowDuplicateFields: true},
+
+	// additional tests for disallowNullPrimitives
+	{disallowNullPrimitives: true, in: `null`, ptr: new(bool), err: errors.New("json: cannot unmarshal null into Go value of type bool")},
+	{disallowNullPrimitives: true, in: `null`, ptr: new(int), err: errors.New("json: cannot unmarshal null into Go value of type int")},
+	{disallowNullPrimitives: true, in: `null`, ptr: new(float64), err: errors.New("json: cannot unmarshal null into Go value of type float64")},
+	{disallowNullPrimitives: true, in: `null`, ptr: new(int16), err: errors.New("json: cannot unmarshal null into Go value of type int16")},
+	{disallowNullPrimitives: true, in: `null`, ptr: new(Number), err: errors.New("json: cannot unmarshal null into Go value of type json.Number"), useNumber: true},
+	{disallowNullPrimitives: true, in: `null`, ptr: new(struct{}), err: errors.New("json: cannot unmarshal null into Go value of type struct {}")},
+	{disallowNullPrimitives: true, in: `null`, ptr: new(string), err: errors.New("json: cannot unmarshal null into Go value of type string")},
 }
 
 func TestMarshal(t *testing.T) {
@@ -1106,6 +1116,9 @@ func TestUnmarshal(t *testing.T) {
 		}
 		if tt.disallowDuplicateFields {
 			dec.DisallowDuplicateFields()
+		}
+		if tt.disallowNullPrimitives {
+			dec.DisallowNullPrimitives()
 		}
 		if err := dec.Decode(v.Interface()); !equalError(err, tt.err) {
 			t.Errorf("#%d: %v, want %v", i, err, tt.err)
