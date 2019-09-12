@@ -388,13 +388,14 @@ type mapStringToStringData struct {
 }
 
 type unmarshalTest struct {
-	in                    string
-	ptr                   interface{} // new(type)
-	out                   interface{}
-	err                   error
-	useNumber             bool
-	golden                bool
-	disallowUnknownFields bool
+	in                      string
+	ptr                     interface{} // new(type)
+	out                     interface{}
+	err                     error
+	useNumber               bool
+	golden                  bool
+	disallowUnknownFields   bool
+	disallowDuplicateFields bool
 }
 
 type B struct {
@@ -949,6 +950,10 @@ var unmarshalTests = []unmarshalTest{
 			Offset: 29,
 		},
 	},
+
+	// additional tests for disallowDuplicateFields
+	{in: `{"x": 1, "x": 3}`, ptr: new(S9), err: errors.New(`json: duplicate field "X"`), disallowDuplicateFields: true},
+	{in: `{"X": 1, "x": 3}`, ptr: new(S9), err: errors.New(`json: duplicate field "X"`), disallowDuplicateFields: true},
 }
 
 func TestMarshal(t *testing.T) {
@@ -1098,6 +1103,9 @@ func TestUnmarshal(t *testing.T) {
 		}
 		if tt.disallowUnknownFields {
 			dec.DisallowUnknownFields()
+		}
+		if tt.disallowDuplicateFields {
+			dec.DisallowDuplicateFields()
 		}
 		if err := dec.Decode(v.Interface()); !equalError(err, tt.err) {
 			t.Errorf("#%d: %v, want %v", i, err, tt.err)

@@ -210,9 +210,10 @@ type decodeState struct {
 		Struct     reflect.Type
 		FieldStack []string
 	}
-	savedError            error
-	useNumber             bool
-	disallowUnknownFields bool
+	savedError              error
+	useNumber               bool
+	disallowUnknownFields   bool
+	disallowDuplicateFields bool
 }
 
 // readIndex returns the position of the last byte read.
@@ -624,6 +625,7 @@ func (d *decodeState) object(v reflect.Value) error {
 	}
 
 	var fields structFields
+	var seenFields []bool
 
 	// Check type of target:
 	//   struct or
@@ -649,6 +651,9 @@ func (d *decodeState) object(v reflect.Value) error {
 		}
 	case reflect.Struct:
 		fields = cachedTypeFields(t)
+		if d.disallowDuplicateFields {
+			seenFields = make([]bool, len(fields.list))
+		}
 		// ok
 	default:
 		d.saveError(&UnmarshalTypeError{Value: "object", Type: t, Offset: int64(d.off)})
@@ -693,9 +698,11 @@ func (d *decodeState) object(v reflect.Value) error {
 			subv = mapElem
 		} else {
 			var f *field
+			var fi int
 			if i, ok := fields.nameIndex[string(key)]; ok {
 				// Found an exact name match.
 				f = &fields.list[i]
+				fi = i
 			} else {
 				// Fall back to the expensive case-insensitive
 				// linear search.
@@ -703,11 +710,20 @@ func (d *decodeState) object(v reflect.Value) error {
 					ff := &fields.list[i]
 					if ff.equalFold(ff.nameBytes, key) {
 						f = ff
+						fi = i
 						break
 					}
 				}
 			}
 			if f != nil {
+				if d.disallowDuplicateFields {
+					if seenFields[fi] {
+						d.saveError(fmt.Errorf("json: duplicate field \"%s\"", f.name))
+						return nil
+					}
+					seenFields[fi] = true
+				}
+
 				subv = v
 				destring = f.quoted
 				for _, i := range f.index {
