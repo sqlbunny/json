@@ -397,6 +397,7 @@ type unmarshalTest struct {
 	disallowUnknownFields   bool
 	disallowDuplicateFields bool
 	disallowNullPrimitives  bool
+	caseSensitiveFields     bool
 }
 
 type B struct {
@@ -964,6 +965,17 @@ var unmarshalTests = []unmarshalTest{
 	{disallowNullPrimitives: true, in: `null`, ptr: new(Number), err: errors.New("json: cannot unmarshal null into Go value of type json.Number"), useNumber: true},
 	{disallowNullPrimitives: true, in: `null`, ptr: new(struct{}), err: errors.New("json: cannot unmarshal null into Go value of type struct {}")},
 	{disallowNullPrimitives: true, in: `null`, ptr: new(string), err: errors.New("json: cannot unmarshal null into Go value of type string")},
+
+	// additional tests for caseSensitiveFields
+	{in: `{"x": 1, "y": 2}`, ptr: new(S9), out: S9{1, 2}},
+	{in: `{"x": 1, "Y": 2}`, ptr: new(S9), out: S9{0, 2}, caseSensitiveFields: true},
+	{in: `{"x": 1, "y": 2}`, ptr: new(S9), out: S9{0, 0}, caseSensitiveFields: true},
+	{in: `{"X": 1, "Y": 2}`, ptr: new(S9), out: S9{1, 2}, caseSensitiveFields: true},
+	{in: `{"X": 1, "x": 3, "y": 2}`, ptr: new(S9), out: S9{3, 2}},
+	{in: `{"X": 1, "x": 3, "Y": 2}`, ptr: new(S9), out: S9{1, 2}, caseSensitiveFields: true},
+	{in: `{"X": 1, "x": 3, "Y": 2}`, ptr: new(S9), out: S9{1, 2}, caseSensitiveFields: true, disallowDuplicateFields: true},
+	{in: `{"X": 1, "x": 3, "Y": 2}`, ptr: new(S9), err: errors.New(`json: duplicate field "X"`), disallowDuplicateFields: true},
+	{in: `{"X": 1, "x": 3, "Y": 2}`, ptr: new(S9), err: errors.New(`json: unknown field "x"`), caseSensitiveFields: true, disallowUnknownFields: true},
 }
 
 func TestMarshal(t *testing.T) {
@@ -1119,6 +1131,9 @@ func TestUnmarshal(t *testing.T) {
 		}
 		if tt.disallowNullPrimitives {
 			dec.DisallowNullPrimitives()
+		}
+		if tt.caseSensitiveFields {
+			dec.CaseSensitiveFields()
 		}
 		if err := dec.Decode(v.Interface()); !equalError(err, tt.err) {
 			t.Errorf("#%d: %v, want %v", i, err, tt.err)

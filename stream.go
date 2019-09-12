@@ -49,6 +49,9 @@ func (dec *Decoder) DisallowDuplicateFields() { dec.d.disallowDuplicateFields = 
 // is a primitive type (string, int..) and the JSON value is null.
 func (dec *Decoder) DisallowNullPrimitives() { dec.d.disallowNullPrimitives = true }
 
+// CaseSensitiveFields causes the Decoder to match struct fields case-sensitively
+func (dec *Decoder) CaseSensitiveFields() { dec.d.caseSensitiveFields = true }
+
 // Decode reads the next JSON-encoded value from its
 // input and stores it in the value pointed to by v.
 //

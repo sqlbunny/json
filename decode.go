@@ -215,6 +215,7 @@ type decodeState struct {
 	disallowUnknownFields   bool
 	disallowDuplicateFields bool
 	disallowNullPrimitives  bool
+	caseSensitiveFields     bool
 }
 
 // readIndex returns the position of the last byte read.
@@ -704,7 +705,7 @@ func (d *decodeState) object(v reflect.Value) error {
 				// Found an exact name match.
 				f = &fields.list[i]
 				fi = i
-			} else {
+			} else if !d.caseSensitiveFields {
 				// Fall back to the expensive case-insensitive
 				// linear search.
 				for i := range fields.list {
