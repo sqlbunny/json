@@ -6,12 +6,13 @@ package json_test
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/sqlbunny/json"
 )
 
 func ExampleMarshal() {

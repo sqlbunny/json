@@ -5,10 +5,11 @@
 package json_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
+
+	"github.com/sqlbunny/json"
 )
 
 type Size int
