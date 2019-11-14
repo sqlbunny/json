@@ -52,6 +52,9 @@ func (dec *Decoder) DisallowNullPrimitives() { dec.d.disallowNullPrimitives = tr
 // CaseSensitiveFields causes the Decoder to match struct fields case-sensitively
 func (dec *Decoder) CaseSensitiveFields() { dec.d.caseSensitiveFields = true }
 
+// Check array sizes causes the Decoder to exactly match the size of arrays
+func (dec *Decoder) CheckArraySizes() { dec.d.checkArraySizes = true }
+
 // Decode reads the next JSON-encoded value from its
 // input and stores it in the value pointed to by v.
 //

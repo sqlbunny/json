@@ -2167,6 +2167,90 @@ func TestPrefilled(t *testing.T) {
 	}
 }
 
+func TestPrefilledArraySizes(t *testing.T) {
+	// Values here change, cannot reuse table across runs.
+	var prefillTests = []struct {
+		in  string
+		ptr interface{}
+		out interface{}
+		err error
+	}{
+		{
+			in:  `{"X": 1, "Y": 2}`,
+			ptr: &XYZ{X: float32(3), Y: int16(4), Z: 1.5},
+			out: &XYZ{X: float64(1), Y: float64(2), Z: 1.5},
+		},
+		{
+			in:  `{"X": 1, "Y": 2}`,
+			ptr: &map[string]interface{}{"X": float32(3), "Y": int16(4), "Z": 1.5},
+			out: &map[string]interface{}{"X": float64(1), "Y": float64(2), "Z": 1.5},
+		},
+		{
+			in:  `[2]`,
+			ptr: &[]int{1},
+			out: &[]int{2},
+		},
+		{
+			in:  `[2, 3]`,
+			ptr: &[]int{1},
+			out: &[]int{2, 3},
+		},
+		{
+			in:  `[2]`,
+			ptr: &[]int{1, 2},
+			out: &[]int{2},
+		},
+		{
+			in:  `[3, 5]`,
+			ptr: &[...]int{1, 2},
+			out: &[...]int{3, 5},
+		},
+		{
+			in:  `[3]`,
+			ptr: &[...]int{1, 2},
+			out: nil,
+			err: fmt.Errorf("json: cannot unmarshal array of size 1 and type [2]int which must be size 2"),
+		},
+		{
+			in:  `[3, 5]`,
+			ptr: &[...]int{1, 2, 3},
+			out: nil,
+			err: fmt.Errorf("json: cannot unmarshal array of size 2 and type [3]int which must be size 3"),
+		},
+		{
+			in:  `[3, 5, 6]`,
+			ptr: &[...]int{1},
+			out: nil,
+			err: fmt.Errorf("json: cannot unmarshal array of size 3 and type [1]int which must be size 1"),
+		},
+	}
+
+	for i, tt := range prefillTests {
+		in := []byte(tt.in)
+		dec := NewDecoder(bytes.NewReader(in))
+		dec.CheckArraySizes()
+		if tt.ptr == nil {
+			continue
+		}
+
+		if err := dec.Decode(tt.ptr); !equalError(err, tt.err) {
+			t.Errorf("#%d: %v, want %v", i, err, tt.err)
+			continue
+		} else if err != nil {
+			continue
+		}
+		if !reflect.DeepEqual(tt.ptr, tt.out) {
+			t.Errorf("#%d: mismatch\nhave: %#+v\nwant: %#+v", i, tt.ptr, tt.out)
+			data, _ := Marshal(tt.ptr)
+			println(string(data))
+			data, _ = Marshal(tt.out)
+			println(string(data))
+			continue
+		}
+
+	}
+}
+
 var invalidUnmarshalTests = []struct {
 	v    interface{}
 	want string

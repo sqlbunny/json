@@ -136,6 +136,16 @@ func (e *UnmarshalTypeError) Error() string {
 	return "json: cannot unmarshal " + e.Value + " into Go value of type " + e.Type.String()
 }
 
+type UnmarshalArrayError struct {
+	Type           reflect.Type
+	ExpectedLength int64
+	Length         int64
+}
+
+func (e *UnmarshalArrayError) Error() string {
+	return "json: cannot unmarshal array of size " + strconv.Itoa(int(e.Length)) + " and type " + e.Type.String() + " which must be size " + strconv.Itoa(int(e.ExpectedLength))
+}
+
 // An UnmarshalFieldError describes a JSON object key that
 // led to an unexported (and therefore unwritable) struct field.
 //
@@ -216,6 +226,7 @@ type decodeState struct {
 	disallowDuplicateFields bool
 	disallowNullPrimitives  bool
 	caseSensitiveFields     bool
+	checkArraySizes         bool
 }
 
 // readIndex returns the position of the last byte read.
@@ -578,6 +589,11 @@ func (d *decodeState) array(v reflect.Value) error {
 		}
 		if d.opcode != scanArrayValue {
 			panic(phasePanicMsg)
+		}
+	}
+	if d.checkArraySizes {
+		if v.Kind() == reflect.Array && i != v.Len() {
+			d.saveError(&UnmarshalArrayError{Type: v.Type(), ExpectedLength: int64(v.Len()), Length: int64(i)})
 		}
 	}
 
