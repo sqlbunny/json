@@ -7,6 +7,7 @@ List of new features:
 - `CaseSensitiveFields`: matches struct fields case-sensitively
 - `DisallowDuplicateFields`: Fails when unmashaling an object into a struct, and the object contains the same struct field multiple times.
 - `DisallowNullPrimitives`: Does not allow unmarshaling `null`s into non-nullable types, essentially primitives (ints, strings..) and non-pointer structs.
+- `CheckArraySizes`: When unmarshaling into a Go fixed size array (not a slice), checks that the JSON array is the same size as the Go array. (The stdlib behavior is to truncate if the JSON array is longer, and to fill with zero values if the JSON array is shorter.)
 - `json:"foo,required"` struct tag, to force a field to be present when unmarshaling.
 
 ## Motivation
