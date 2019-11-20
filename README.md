@@ -10,9 +10,17 @@ List of new features:
 - `CheckArraySizes`: When unmarshaling into a Go fixed size array (not a slice), checks that the JSON array is the same size as the Go array. (The stdlib behavior is to truncate if the JSON array is longer, and to fill with zero values if the JSON array is shorter.)
 - `json:"foo,required"` struct tag, to force a field to be present when unmarshaling.
 
+## Usage
+
+- Replace your usages of `encoding/json` with `github.com/sqlbunny/json`.
+- Activate your desired extra strictness by calling methods such as `DisallowDuplicateFields` on your Decoder instances.
+- Done!
+
+`github.com/sqlbunny/json` is a drop-in replacement for `encoding/json`. This means, if you just replace your usages it will behave in exactly the same way. The extra strictness only happens if you explicitly enable it.
+
 ## Motivation
 
-This fork of `json` is desinged for unmarshaling request bodies of a JSON REST API. If
+This fork of `json` is designed for unmarshaling request bodies of a JSON REST API. If
 your API is too liberal when unmarshaling JSON, clients might end up depending
 on that behavior, forcing you to support it forever. The best solution is to be
 as strict as possible.
