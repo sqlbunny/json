@@ -227,6 +227,7 @@ type decodeState struct {
 	disallowNullPrimitives  bool
 	caseSensitiveFields     bool
 	checkArraySizes         bool
+	overwriteArrays         bool
 }
 
 // readIndex returns the position of the last byte read.
@@ -569,7 +570,11 @@ func (d *decodeState) array(v reflect.Value) error {
 
 		if i < v.Len() {
 			// Decode into element.
-			if err := d.value(v.Index(i)); err != nil {
+			elem := v.Index(i)
+			if d.overwriteArrays {
+				elem.Set(reflect.Zero(elem.Type()))
+			}
+			if err := d.value(elem); err != nil {
 				return err
 			}
 		} else {

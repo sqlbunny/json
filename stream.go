@@ -52,8 +52,12 @@ func (dec *Decoder) DisallowNullPrimitives() { dec.d.disallowNullPrimitives = tr
 // CaseSensitiveFields causes the Decoder to match struct fields case-sensitively
 func (dec *Decoder) CaseSensitiveFields() { dec.d.caseSensitiveFields = true }
 
-// Check array sizes causes the Decoder to exactly match the size of arrays
+// CheckArraySizes causes the Decoder to exactly match the size of arrays
 func (dec *Decoder) CheckArraySizes() { dec.d.checkArraySizes = true }
+
+// OverwriteArrays causes the Decoder to overwrite the existing data in a slice or array when unmarshaling
+// into it, instead of unmarshaling on top of the existing items merging the fields.
+func (dec *Decoder) OverwriteArrays() { dec.d.overwriteArrays = true }
 
 // Decode reads the next JSON-encoded value from its
 // input and stores it in the value pointed to by v.
